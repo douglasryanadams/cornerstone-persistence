@@ -39,6 +39,8 @@ public interface JpaController<T> {
     
     public List<T> get(int maxResults, int firstResult, String orderBy, boolean desc);
     
+    public List<T> get(int maxResults, int firstResult, String orderBy, boolean orderByIgnoreCase, boolean desc);
+    
     public Long getCount();
     
     public T getReference(Object id);
@@ -53,6 +55,8 @@ public interface JpaController<T> {
     
     public List<T> findBy(T searchEntity, int firstResult, int maxResults, String orderBy, boolean desc);
     
+    public List<T> findBy(T searchEntity, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc);
+    
     public Long findByCount(T searchEntity);
 
     public List<T> findBy(SingularAttribute<T, ?> field, Object value);
@@ -60,6 +64,8 @@ public interface JpaController<T> {
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults);
     
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean desc);
+    
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc);
     
     public Long findByCount(SingularAttribute<T, ?> field, Object value);
     
