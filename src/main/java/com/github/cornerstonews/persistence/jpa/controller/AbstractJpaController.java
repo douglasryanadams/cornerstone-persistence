@@ -35,7 +35,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
 
     private static final Logger log = LogManager.getLogger(AbstractJpaController.class);
 
-    private EntityManagerFactory emf = null;
+    protected EntityManagerFactory emf = null;
 
     private Class<T> classType;
 
@@ -164,7 +164,8 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
         return findBy(field, value, false, firstResult, maxResults, orderBy, true, desc);
     }
     
-    private List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+    private List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, 
+            boolean desc) {
         EntityManager em = null;
         try {
             em = getEntityManager();
@@ -232,21 +233,25 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
         return findBy(searchEntity, false, firstResult, maxResults, orderBy, true, desc);
     }
     
-    private List<T> findBy(T searchEntity, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+    public List<T> findBy(T searchEntity, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(searchEntity, this.defaultPredicatesProvider, all, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
+    }
+    
+    protected List<T> findBy(T searchEntity, PredicatesProvider<T> predicateProvider, boolean all, int firstResult, int maxResults, String orderBy, 
+            boolean orderByIgnoreCase, boolean desc) {
         EntityManager em = null;
         try {
             em = getEntityManager();
             CriteriaBuilder cb = em.getCriteriaBuilder();
             CriteriaQuery<T> cq = cb.createQuery(this.classType);
             Root<T> root = cq.from(this.classType);
-            List<Predicate> predicates = getSearchPredicates(searchEntity, cb, root);
+            List<Predicate> predicates = predicateProvider.getPredicates(searchEntity, cb, cq, root);
             cq.select(root);
             cq.where(predicates.toArray(new Predicate[predicates.size()]));
             
-            SingularAttribute<T, ?> orderByAttribute = getValidOrDefaultOrderBy(orderBy);
-            Expression<String> orderByExpression = root.get(orderByAttribute.getName());
-            if(orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByAttribute.getJavaType())) {
-                orderByExpression = cb.upper(root.get(orderByAttribute.getName()));
+            Expression<String> orderByExpression = predicateProvider.getOrderBy(orderBy, cb, cq, root);
+            if (orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByExpression.getJavaType())) {
+                orderByExpression = cb.upper(orderByExpression);
             }
             
             if(desc) {
@@ -268,13 +273,17 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
     }
     
     public Long findByCount(T searchEntity) {
+        return this.findByCount(searchEntity, this.defaultPredicatesProvider);
+    }
+    
+    protected Long findByCount(T searchEntity, PredicatesProvider<T> predicateProvider) {
         EntityManager em = null;
         try {
             em = getEntityManager();
             CriteriaBuilder cb = em.getCriteriaBuilder();
             CriteriaQuery<Long> cq = cb.createQuery(Long.class);
             Root<T> root = cq.from(this.classType);
-            List<Predicate> predicates = getSearchPredicates(searchEntity, cb, root);
+            List<Predicate> predicates = predicateProvider.getPredicates(searchEntity, cb, cq, root);
             cq.select(cb.count(root));
             cq.where(predicates.toArray(new Predicate[predicates.size()]));
             TypedQuery<Long> q = em.createQuery(cq);
@@ -285,6 +294,23 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
+    
+    public interface PredicatesProvider<T> {
+        public List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
+        public Expression<String> getOrderBy(String orderBy, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
+    }
+    
+    private PredicatesProvider<T> defaultPredicatesProvider = new PredicatesProvider<T>() {
+        @Override
+        public List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root) {
+            return getSearchPredicates(searchEntity, cb, root);
+        }
+
+        @Override
+        public Expression<String> getOrderBy(String orderBy, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root) {
+            return root.get(getValidOrDefaultOrderBy(orderBy).getName());
+        }
+    };
     
     public T create(T entity) {
         return this.performTransaction(entity, (EntityManager em, T entity2) -> em.persist(entity2));
