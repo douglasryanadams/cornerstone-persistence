@@ -47,28 +47,27 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
     protected EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
-    
+
     protected abstract SingularAttribute<T, ?> getValidOrDefaultOrderBy(String orderBy);
-    
+
     protected abstract List<Predicate> getSearchPredicates(T entity, CriteriaBuilder cb, Root<T> root);
-    
-    
+
     public List<T> getAll() {
         return get(true, -1, -1, null, true, false);
     }
 
     public List<T> get(int startPosition, int maxResults) {
-        return get(false, startPosition, maxResults, null, true, false);
+        return get(startPosition, maxResults, null, false);
     }
 
     public List<T> get(int startPosition, int maxResults, String orderBy, boolean desc) {
-        return get(false, startPosition, maxResults, orderBy, true, desc);
+        return get(startPosition, maxResults, orderBy, true, desc);
     }
-    
+
     public List<T> get(int startPosition, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
-        return get(false, startPosition, maxResults, orderBy, true, desc);
+        return get(false, startPosition, maxResults, orderBy, orderByIgnoreCase, desc);
     }
-    
+
     private List<T> get(boolean all, int startPosition, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
         EntityManager em = null;
         try {
@@ -77,14 +76,14 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             CriteriaQuery<T> cq = cb.createQuery(this.classType);
             Root<T> root = cq.from(this.classType);
             cq.select(root);
-            
+
             SingularAttribute<T, ?> orderByAttribute = getValidOrDefaultOrderBy(orderBy);
             Expression<String> orderByExpression = root.get(orderByAttribute.getName());
-            if(orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByAttribute.getJavaType())) {
+            if (orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByAttribute.getJavaType())) {
                 orderByExpression = cb.upper(root.get(orderByAttribute.getName()));
             }
-            
-            if(desc) {
+
+            if (desc) {
                 cq.orderBy(cb.desc(orderByExpression));
             } else {
                 cq.orderBy(cb.asc(orderByExpression));
@@ -101,7 +100,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
-    
+
     public Long getCount() {
         EntityManager em = null;
         try {
@@ -118,7 +117,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
-    
+
     public T getReference(Object id) {
         EntityManager em = null;
         try {
@@ -147,25 +146,32 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
-    
+
     public List<T> findBy(SingularAttribute<T, ?> field, Object value) {
-        return findBy(field, value, true, -1, -1, null, true, false);
+        return findBy(field, value, null, false);
+    }
+    
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, String orderBy, boolean desc) {
+        return findBy(field, value, orderBy, true, desc);
     }
 
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(field, value, true, -1, -1, orderBy, orderByIgnoreCase, desc);
+    }
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults) {
-        return findBy(field, value, false, firstResult, maxResults, null, true, false);
+        return findBy(field, value, firstResult, maxResults, null, false);
     }
 
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean desc) {
-        return findBy(field, value, false, firstResult, maxResults, orderBy, true, desc);
+        return findBy(field, value, firstResult, maxResults, orderBy, true, desc);
     }
-    
+
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
-        return findBy(field, value, false, firstResult, maxResults, orderBy, true, desc);
+        return findBy(field, value, false, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
     }
-    
-    private List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, 
-            boolean desc) {
+
+    private List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
         EntityManager em = null;
         try {
             em = getEntityManager();
@@ -174,14 +180,14 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             Root<T> root = cq.from(this.classType);
             cq.select(root);
             cq.where(cb.equal(root.get(field), value));
-            
+
             SingularAttribute<T, ?> orderByAttribute = getValidOrDefaultOrderBy(orderBy);
             Expression<String> orderByExpression = root.get(orderByAttribute.getName());
-            if(orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByAttribute.getJavaType())) {
+            if (orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByAttribute.getJavaType())) {
                 orderByExpression = cb.upper(root.get(orderByAttribute.getName()));
             }
-            
-            if(desc) {
+
+            if (desc) {
                 cq.orderBy(cb.desc(orderByExpression));
             } else {
                 cq.orderBy(cb.asc(orderByExpression));
@@ -216,29 +222,40 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
-    
+
     public List<T> findBy(T searchEntity) {
-        return findBy(searchEntity, true, -1, -1, null, true, false);
+        return findBy(searchEntity, null, false);
+    }
+    
+    public List<T> findBy(T searchEntity, String orderBy, boolean desc) {
+        return findBy(searchEntity, orderBy, true, desc);
+    }
+
+    public List<T> findBy(T searchEntity, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(searchEntity, this.defaultPredicatesProvider, orderBy, orderByIgnoreCase, desc);
     }
 
     public List<T> findBy(T searchEntity, int firstResult, int maxResults) {
-        return findBy(searchEntity, false, firstResult, maxResults, null, true, false);
+        return findBy(searchEntity, firstResult, maxResults, null, false);
+    }
+    
+    public List<T> findBy(T searchEntity, int firstResult, int maxResults, String orderBy, boolean desc) {
+        return findBy(searchEntity, firstResult, maxResults, orderBy, true, desc);
     }
 
-    public List<T> findBy(T searchEntity, int firstResult, int maxResults, String orderBy, boolean desc) {
-        return findBy(searchEntity, false, firstResult, maxResults, orderBy, true, desc);
-    }
-    
     public List<T> findBy(T searchEntity, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
-        return findBy(searchEntity, false, firstResult, maxResults, orderBy, true, desc);
+        return findBy(searchEntity, this.defaultPredicatesProvider, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
     }
-    
-    public List<T> findBy(T searchEntity, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
-        return findBy(searchEntity, this.defaultPredicatesProvider, all, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
+
+    protected List<T> findBy(T searchEntity, PredicatesProvider<T> predicateProvider, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(searchEntity, predicateProvider, true, -1, -1, orderBy, orderByIgnoreCase, desc);
     }
-    
-    protected List<T> findBy(T searchEntity, PredicatesProvider<T> predicateProvider, boolean all, int firstResult, int maxResults, String orderBy, 
-            boolean orderByIgnoreCase, boolean desc) {
+
+    protected List<T> findBy(T searchEntity, PredicatesProvider<T> predicateProvider, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(searchEntity, predicateProvider, false, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
+    }
+
+    private List<T> findBy(T searchEntity, PredicatesProvider<T> predicateProvider, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
         EntityManager em = null;
         try {
             em = getEntityManager();
@@ -248,13 +265,13 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             List<Predicate> predicates = predicateProvider.getPredicates(searchEntity, cb, cq, root);
             cq.select(root);
             cq.where(predicates.toArray(new Predicate[predicates.size()]));
-            
+
             Expression<String> orderByExpression = predicateProvider.getOrderBy(orderBy, cb, cq, root);
             if (orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByExpression.getJavaType())) {
                 orderByExpression = cb.upper(orderByExpression);
             }
-            
-            if(desc) {
+
+            if (desc) {
                 cq.orderBy(cb.desc(orderByExpression));
             } else {
                 cq.orderBy(cb.asc(orderByExpression));
@@ -271,11 +288,11 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
-    
+
     public Long findByCount(T searchEntity) {
         return this.findByCount(searchEntity, this.defaultPredicatesProvider);
     }
-    
+
     protected Long findByCount(T searchEntity, PredicatesProvider<T> predicateProvider) {
         EntityManager em = null;
         try {
@@ -294,12 +311,13 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
         }
     }
-    
+
     public interface PredicatesProvider<T> {
         public List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
+
         public Expression<String> getOrderBy(String orderBy, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
     }
-    
+
     private PredicatesProvider<T> defaultPredicatesProvider = new PredicatesProvider<T>() {
         @Override
         public List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root) {
@@ -311,7 +329,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             return root.get(getValidOrDefaultOrderBy(orderBy).getName());
         }
     };
-    
+
     public T create(T entity) {
         return this.performTransaction(entity, (EntityManager em, T entity2) -> em.persist(entity2));
     }
@@ -354,7 +372,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
     private interface Transaction<T> {
         public void execute(EntityManager em, T entity);
     }
-    
+
     protected String getLikeString(String queryValue) {
         StringBuilder builder = new StringBuilder();
         builder.append("%");
