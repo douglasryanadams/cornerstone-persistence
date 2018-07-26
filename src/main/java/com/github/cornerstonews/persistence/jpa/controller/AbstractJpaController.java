@@ -348,7 +348,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
         });
     }
 
-    private T performTransaction(T entity, Transaction<T> transaction) {
+    protected T performTransaction(T entity, Transaction<T> transaction) {
         EntityManager em = null;
         try {
             em = getEntityManager();
@@ -369,7 +369,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
         }
     }
 
-    private interface Transaction<T> {
+    protected interface Transaction<T> {
         public void execute(EntityManager em, T entity);
     }
 
