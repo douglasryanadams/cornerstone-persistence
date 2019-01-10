@@ -61,11 +61,19 @@ public interface JpaController<T> {
 
     public List<T> findBy(SingularAttribute<T, ?> field, Object value);
     
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase);
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults);
+    
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, int firstResult, int maxResults);
     
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean desc);
     
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, int firstResult, int maxResults, String orderBy, boolean desc);
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc);
+    
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc);
     
     public Long findByCount(SingularAttribute<T, ?> field, Object value);
     

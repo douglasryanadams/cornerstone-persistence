@@ -151,27 +151,51 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
         return findBy(field, value, null, false);
     }
     
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase) {
+        return findBy(field, value, ignoreCase, null, false);
+    }
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, String orderBy, boolean desc) {
         return findBy(field, value, orderBy, true, desc);
     }
 
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, String orderBy, boolean desc) {
+        return findBy(field, value, ignoreCase, orderBy, true, desc);
+    }
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, String orderBy, boolean orderByIgnoreCase, boolean desc) {
-        return findBy(field, value, true, -1, -1, orderBy, orderByIgnoreCase, desc);
+        return findBy(field, value, false, true, -1, -1, orderBy, orderByIgnoreCase, desc);
+    }
+    
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(field, value, ignoreCase, true, -1, -1, orderBy, orderByIgnoreCase, desc);
     }
     
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults) {
         return findBy(field, value, firstResult, maxResults, null, false);
     }
 
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, int firstResult, int maxResults) {
+        return findBy(field, value, ignoreCase, firstResult, maxResults, null, false);
+    }
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean desc) {
         return findBy(field, value, firstResult, maxResults, orderBy, true, desc);
     }
 
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, int firstResult, int maxResults, String orderBy, boolean desc) {
+        return findBy(field, value, ignoreCase, firstResult, maxResults, orderBy, true, desc);
+    }
+    
     public List<T> findBy(SingularAttribute<T, ?> field, Object value, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
-        return findBy(field, value, false, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
+        return findBy(field, value, false, false, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
     }
 
-    private List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+    public List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
+        return findBy(field, value, ignoreCase, false, firstResult, maxResults, orderBy, orderByIgnoreCase, desc);
+    }
+    
+    private List<T> findBy(SingularAttribute<T, ?> field, Object value, boolean ignoreCase, boolean all, int firstResult, int maxResults, String orderBy, boolean orderByIgnoreCase, boolean desc) {
         EntityManager em = null;
         try {
             em = getEntityManager();
@@ -179,7 +203,11 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             CriteriaQuery<T> cq = cb.createQuery(this.classType);
             Root<T> root = cq.from(this.classType);
             cq.select(root);
-            cq.where(cb.equal(root.get(field), value));
+            if(ignoreCase && CharSequence.class.isAssignableFrom(field.getJavaType())) {
+                cq.where(cb.equal(cb.upper(root.get(field.getName())), value.toString().toUpperCase()));
+            } else {
+                cq.where(cb.equal(root.get(field), value));
+            }
 
             SingularAttribute<T, ?> orderByAttribute = getValidOrDefaultOrderBy(orderBy);
             Expression<String> orderByExpression = root.get(orderByAttribute.getName());
