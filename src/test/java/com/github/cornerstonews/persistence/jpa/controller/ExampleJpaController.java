@@ -2,9 +2,15 @@ package com.github.cornerstonews.persistence.jpa.controller;
 
 import com.github.cornerstonews.persistence.jpa.entity.Example;
 import com.github.cornerstonews.persistence.jpa.entity.Example_;
+import com.github.cornerstonews.persistence.jpa.entity.MiddleTable;
+import com.github.cornerstonews.persistence.jpa.entity.MiddleTable_;
+import com.github.cornerstonews.persistence.jpa.entity.EdgeTable;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
@@ -54,4 +60,32 @@ class ExampleJpaController extends AbstractJpaController<Example> {
     public Object convertToPrimaryKeyType(final Object id) {
         return Integer.parseInt(String.valueOf(id));
     }
+
+    public List<Example> findBy(final Example example, final EdgeTable edgeTable) {
+        return findBy(example, getPredicateProvider(edgeTable), null, false, false);
+    }
+
+    public long findByCount(final Example example, final EdgeTable edgeTable) {
+        return findByCount(example, getPredicateProvider(edgeTable));
+    }
+
+    private PredicatesProvider<Example> getPredicateProvider(final EdgeTable edgeTable) {
+        return new PredicatesProvider<>() {
+            @Override
+            public List<Predicate> getPredicates(final Example searchEntity, final CriteriaBuilder cb, final CriteriaQuery<?> cq, final Root<Example> root) {
+                final var predicates = getSearchPredicates(searchEntity, cb, root);
+                if (edgeTable != null) {
+                    predicates.add(cb.equal(root.join(Example_.middleTables).get(MiddleTable_.edgeTable), edgeTable));
+                }
+                cq.distinct(true);
+                return predicates;
+            }
+
+            @Override
+            public Expression<String> getOrderBy(final String orderBy, final CriteriaBuilder cb, final CriteriaQuery<?> cq, final Root<Example> root) {
+                return root.get(getValidOrDefaultOrderBy(orderBy).getName());
+            }
+        };
+    }
+
 }
