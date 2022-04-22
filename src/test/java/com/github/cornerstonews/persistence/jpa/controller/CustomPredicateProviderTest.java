@@ -87,4 +87,9 @@ public class CustomPredicateProviderTest {
         assertEquals(1, controller.findByCount(new Example(null, null), edgeTables.get(0)));
     }
 
+    @Test
+    void testFindByCountEdgeTableNonDistinct() {
+        assertEquals(5, controller.findByCount(new Example(null, null), edgeTables.get(0), false));
+    }
+
 }

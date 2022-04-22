@@ -65,6 +65,9 @@ class ExampleJpaController extends AbstractJpaController<Example> {
         return findBy(example, getPredicateProvider(edgeTable), null, false, false);
     }
 
+    public long findByCount(final Example example, final EdgeTable edgeTable, boolean distinctCount) {
+        return findByCount(example, getPredicateProvider(edgeTable), distinctCount);
+    }
     public long findByCount(final Example example, final EdgeTable edgeTable) {
         return findByCount(example, getPredicateProvider(edgeTable));
     }
