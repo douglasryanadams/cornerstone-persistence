@@ -35,9 +35,9 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
 
     private static final Logger log = LogManager.getLogger(AbstractJpaController.class);
 
-    protected EntityManagerFactory emf = null;
+    protected EntityManagerFactory emf;
 
-    private Class<T> classType;
+    private final Class<T> classType;
 
     protected AbstractJpaController(EntityManagerFactory emf, Class<T> classType) {
         this.emf = emf;
@@ -112,7 +112,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             TypedQuery<Long> q = em.createQuery(cq);
             return q.getSingleResult();
         } finally {
-            if (em != null /* && em.isOpen() */) {
+            if (em != null) {
                 em.close();
             }
         }
@@ -124,7 +124,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             em = getEntityManager();
             return em.getReference(this.classType, convertToPrimaryKeyType(id));
         } finally {
-            if (em != null /* && em.isOpen() */) {
+            if (em != null) {
                 em.close();
             }
         }
@@ -292,7 +292,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             Root<T> root = cq.from(this.classType);
             List<Predicate> predicates = predicateProvider.getPredicates(searchEntity, cb, cq, root);
             cq.select(root);
-            cq.where(predicates.toArray(new Predicate[predicates.size()]));
+            cq.where(predicates.toArray(new Predicate[0]));
 
             Expression<String> orderByExpression = predicateProvider.getOrderBy(orderBy, cb, cq, root);
             if (orderByIgnoreCase && CharSequence.class.isAssignableFrom(orderByExpression.getJavaType())) {
@@ -311,7 +311,7 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
             return q.getResultList();
         } finally {
-            if (em != null /* && em.isOpen() */) {
+            if (em != null) {
                 em.close();
             }
         }
@@ -330,23 +330,23 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             Root<T> root = cq.from(this.classType);
             List<Predicate> predicates = predicateProvider.getPredicates(searchEntity, cb, cq, root);
             cq.select(cb.count(root));
-            cq.where(predicates.toArray(new Predicate[predicates.size()]));
+            cq.where(predicates.toArray(new Predicate[0]));
             TypedQuery<Long> q = em.createQuery(cq);
             return q.getSingleResult();
         } finally {
-            if (em != null /* && em.isOpen() */) {
+            if (em != null) {
                 em.close();
             }
         }
     }
 
     public interface PredicatesProvider<T> {
-        public List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
+        List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
 
-        public Expression<String> getOrderBy(String orderBy, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
+        Expression<String> getOrderBy(String orderBy, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root);
     }
 
-    private PredicatesProvider<T> defaultPredicatesProvider = new PredicatesProvider<T>() {
+    private final PredicatesProvider<T> defaultPredicatesProvider = new PredicatesProvider<T>() {
         @Override
         public List<Predicate> getPredicates(T searchEntity, CriteriaBuilder cb, CriteriaQuery<?> cq, Root<T> root) {
             return getSearchPredicates(searchEntity, cb, root);
@@ -391,22 +391,18 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             }
             throw ex;
         } finally {
-            if (em != null /* && em.isOpen() */) {
+            if (em != null) {
                 em.close();
             }
         }
     }
 
     protected interface Transaction<T> {
-        public void execute(EntityManager em, T entity);
+        void execute(EntityManager em, T entity);
     }
 
     protected String getLikeString(String queryValue) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("%");
-        builder.append(queryValue.toUpperCase());
-        builder.append("%");
-        return builder.toString();
+        return "%" + queryValue.toUpperCase() + "%";
     }
 
 }
