@@ -334,8 +334,11 @@ public abstract class AbstractJpaController<T> implements JpaController<T> {
             Root<T> root = cq.from(this.classType);
             List<Predicate> predicates = predicateProvider.getPredicates(searchEntity, cb, cq, root);
 
-            if (distinctCount == null || distinctCount) cq.select(cb.countDistinct(root));
-            else cq.select(cb.count(root));
+            if (distinctCount == null || distinctCount) {
+                cq.select(cb.countDistinct(root));
+            } else {
+                cq.select(cb.count(root));
+            }
 
             cq.where(predicates.toArray(new Predicate[0]));
             TypedQuery<Long> q = em.createQuery(cq);

@@ -1,22 +1,21 @@
 package com.github.cornerstonews.persistence.jpa.controller;
 
-import com.github.cornerstonews.persistence.jpa.entity.Example;
-import com.github.cornerstonews.persistence.jpa.entity.Example_;
-import com.github.cornerstonews.persistence.jpa.entity.MiddleTable;
-import com.github.cornerstonews.persistence.jpa.entity.MiddleTable_;
-import com.github.cornerstonews.persistence.jpa.entity.EdgeTable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+
+import com.github.cornerstonews.persistence.jpa.entity.EdgeTable;
+import com.github.cornerstonews.persistence.jpa.entity.Example;
+import com.github.cornerstonews.persistence.jpa.entity.Example_;
+import com.github.cornerstonews.persistence.jpa.entity.MiddleTable_;
 
 class ExampleJpaController extends AbstractJpaController<Example> {
 
@@ -68,6 +67,7 @@ class ExampleJpaController extends AbstractJpaController<Example> {
     public long findByCount(final Example example, final EdgeTable edgeTable, boolean distinctCount) {
         return findByCount(example, getPredicateProvider(edgeTable), distinctCount);
     }
+
     public long findByCount(final Example example, final EdgeTable edgeTable) {
         return findByCount(example, getPredicateProvider(edgeTable));
     }
@@ -90,5 +90,4 @@ class ExampleJpaController extends AbstractJpaController<Example> {
             }
         };
     }
-
 }
